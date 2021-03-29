@@ -1,11 +1,11 @@
 const CustomError = require("../extensions/custom-error");
 
 class VigenereCipheringMachine {
-	constructor(isDirect = true) {
+  constructor(isDirect = true) {
     this.isDirect = isDirect;
     this.alphabet = "";
     this.tabulaRecta = [];
-	}
+  }
   createAlphabet() {
     for (let i = 65; i <= 90; i++) {
       this.alphabet += String.fromCharCode(i);
@@ -22,32 +22,16 @@ class VigenereCipheringMachine {
   }
 
   equalizeLength(message, key) {
-    message = String(message);
-    key = String(key);
-    let newKey = key;
-    const messageArray = message.split("");
-    let keyArray;
-    let newMessage = messageArray.join("");
-    if (message.length > key.length) {
-      while (key.length < message.length) {
-        key += key;
-      }
-      if (key.length > newMessage.length) {
-        newKey = key.slice(0, newMessage.length);
-      }
-      keyArray = newKey.split("");
-      for (let i = 0; i < messageArray.length; i++) {
-        if (messageArray[i] == " ") {
-          keyArray.splice(i, 0, " ");
-        }
-      }
-      newKey = keyArray.join("");
-    } else {
-      newKey = key.slice(0, newMessage.length);
+    key = key.toUpperCase();
+    message = message.toUpperCase();
+    const messageArr = message.split("");
+    let newKey = "";
+    while (newKey.length < messageArr.length) {
+      newKey += key;
     }
     return {
       newKey: newKey,
-      newMessage: newMessage,
+      newMessage: message,
     };
   }
 
@@ -56,21 +40,30 @@ class VigenereCipheringMachine {
       throw new Error("Message or key is not passed");
     } else {
       this.createTabulaRecta();
-      const result = this.equalizeLength(message, key),
-        eqMessage = result.newMessage.toUpperCase(),
-        eqKey = result.newKey.toUpperCase();
-      let encryptSolution = "";
+      const result = this.equalizeLength(message, key);
+      message = result.newMessage;
+      key = result.newKey;
+      let encryptSolution = [];
 
-      for (let i = 0; i < eqMessage.length; i++) {
-        if (this.alphabet.indexOf(eqMessage[i]) >= 0) {
-          let m = this.alphabet.indexOf(eqMessage[i]);
-          let k = this.alphabet.indexOf(eqKey[i]);
-
-          encryptSolution += this.tabulaRecta[m][k];
+      for (let i = 0, j = 0; i < message.length; i++, j++) {
+        let elM = message[i],
+          elK = key[j];
+        if (elM == " ") {
+          encryptSolution.push(elM);
+          j--;
         } else {
-          encryptSolution += eqMessage[i];
+          if (this.alphabet.indexOf(elM) >= 0) {
+            let m = this.alphabet.indexOf(elM);
+            let k = this.alphabet.indexOf(elK);
+
+            encryptSolution.push(this.tabulaRecta[m][k]);
+          } else {
+            encryptSolution.push(message[i]);
+          }
         }
       }
+
+      encryptSolution = encryptSolution.join("");
       if (this.isDirect) {
         return encryptSolution;
       } else {
@@ -88,21 +81,30 @@ class VigenereCipheringMachine {
       throw new Error("Message or key is not passed");
     } else {
       this.createTabulaRecta();
-      const result = this.equalizeLength(message, key),
-        eqMessage = result.newMessage.toUpperCase(),
-        eqKey = result.newKey.toUpperCase();
-      let decryptSolution = "";
+      const result = this.equalizeLength(message, key);
+      message = result.newMessage;
+      key = result.newKey;
+      let decryptSolution = [];
 
-      for (let i = 0; i < eqMessage.length; i++) {
-        if (this.alphabet.indexOf(eqMessage[i]) >= 0) {
-          let m = this.alphabet.indexOf(eqKey[i]);
-          let k = this.tabulaRecta[m].indexOf(eqMessage[i]);
-
-          decryptSolution += this.alphabet[k];
+      for (let i = 0, j = 0; i < message.length; i++, j++) {
+        let elM = message[i],
+          elK = key[j];
+        if (elM == " ") {
+          decryptSolution.push(elM);
+          j--;
         } else {
-          decryptSolution += eqMessage[i];
+          if (this.alphabet.indexOf(elM) >= 0) {
+            let m = this.alphabet.indexOf(elK);
+            let k = this.tabulaRecta[m].indexOf(elM);
+
+            decryptSolution.push(this.alphabet[k]);
+          } else {
+            decryptSolution.push(elM);
+          }
         }
       }
+      decryptSolution = decryptSolution.join("");
+
       if (this.isDirect) {
         return decryptSolution;
       } else {
@@ -113,7 +115,7 @@ class VigenereCipheringMachine {
         return reverseDecryptSolution;
       }
     }
-	}
+  }
 }
 
 module.exports = VigenereCipheringMachine;
